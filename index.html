@@ -1,0 +1,852 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#111318">
+<title>DUO 20 · Natalia + Camilo</title>
+
+<!-- PWA / iPhone -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="DUO 20">
+<link rel="apple-touch-icon" id="appleIcon" href="icon.svg">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+
+<style>
+:root{
+  --bg:#f5f6f8;--card:#fff;--ink:#171a21;--muted:#6b7280;--line:#e6e8ed;
+  --accent:#635bff;--accent2:#9c7cff;--ok:#15945e;--warn:#b7791f;--dark:#111318;
+  --shadow:0 14px 42px rgba(20,24,35,.09)
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0;background:
+  radial-gradient(circle at 80% -10%,#e9e7ff 0,transparent 28%),
+  linear-gradient(180deg,#f2f3f7,#fafafa 32%,#f5f6f8);
+  color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","Segoe UI",Roboto,Arial,sans-serif;
+  line-height:1.45;-webkit-tap-highlight-color:transparent
+}
+button,input{font:inherit}
+.app{max-width:720px;margin:auto;padding:14px 14px calc(96px + env(safe-area-inset-bottom))}
+
+/* ===== VIEWS ===== */
+.view{display:none;animation:fade .22s ease}
+.view.active{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+.hero{
+  background:linear-gradient(145deg,#111318,#262b38 72%,#343a4b);
+  color:#fff;border-radius:26px;padding:24px 20px;box-shadow:var(--shadow);overflow:hidden;position:relative
+}
+.hero:after{content:"";position:absolute;width:220px;height:220px;border-radius:50%;background:rgba(255,255,255,.055);right:-70px;top:-90px}
+.brand{font-weight:900;letter-spacing:.12em;font-size:.74rem;opacity:.7}
+.hero h1{font-size:clamp(1.9rem,7.5vw,2.7rem);line-height:1;margin:8px 0 12px}
+.hero p{margin:0;color:#d9deea;font-size:.94rem}
+.hero-meta{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px}
+.chip{font-size:.76rem;padding:6px 9px;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.08);border-radius:999px}
+
+.profile-switch{
+  display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin:14px 0;
+  position:sticky;top:6px;z-index:20;background:rgba(245,246,248,.9);backdrop-filter:blur(12px);padding:6px 0;border-radius:16px
+}
+.profile-switch button{
+  border:1px solid var(--line);background:#fff;border-radius:14px;padding:12px 6px;font-weight:800;color:#4b5563;cursor:pointer;min-height:48px
+}
+.profile-switch button.active{background:var(--dark);color:#fff;border-color:var(--dark)}
+.panel{background:#fff;border:1px solid var(--line);border-radius:20px;padding:16px;box-shadow:0 8px 26px rgba(17,24,39,.045)}
+.goal h2{font-size:1.12rem;margin:0 0 5px}
+.goal p{margin:0;color:var(--muted);font-size:.9rem}
+.goal-tags{display:flex;gap:7px;flex-wrap:wrap;margin-top:12px}
+.goal-tag{background:#f1efff;color:#554bd0;border-radius:999px;padding:6px 9px;font-size:.76rem;font-weight:750}
+.level{margin-top:14px;border-top:1px solid var(--line);padding-top:12px}
+.level strong{display:block;font-size:.78rem;color:var(--muted);margin-bottom:4px}
+.level .big{font-size:1.4rem;font-weight:900}
+.level span{font-size:.82rem;color:var(--muted)}
+
+.section-title{font-size:1.28rem;margin:22px 2px 11px}
+.week-select{display:flex;gap:7px;overflow:auto;padding-bottom:3px;-webkit-overflow-scrolling:touch}
+.week-btn{min-width:96px;min-height:46px;border:1px solid var(--line);background:#fff;padding:9px;border-radius:14px;font-weight:800;color:#667085;cursor:pointer}
+.week-btn.active{background:#f0eeff;border-color:#cfcaff;color:#5046c8}
+.week-focus{margin:10px 2px 0;font-size:.86rem;color:var(--muted)}
+.week-focus b{color:var(--ink)}
+
+.schedule{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:12px}
+.day{background:#fff;border:1px solid var(--line);border-radius:15px;padding:12px 8px;text-align:center;min-height:90px;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.day b{font-size:.88rem;display:block}
+.day span{font-size:.74rem;color:var(--muted);display:block;margin-top:4px}
+.day.strength{background:#f9f8ff;border-color:#d8d4ff}
+.run-check{display:none;margin-top:8px;width:21px;height:21px;accent-color:var(--ok)}
+body[data-profile="natalia"] .run-check,body[data-profile="duo"] .run-check{display:inline-block}
+
+.workouts{display:grid;grid-template-columns:1fr;gap:11px}
+.workout{background:#fff;border:1px solid var(--line);border-radius:20px;padding:16px;box-shadow:0 9px 24px rgba(20,24,35,.045)}
+.workout .top{display:flex;justify-content:space-between;gap:8px;align-items:flex-start}
+.workout h3{margin:0 0 3px;font-size:1.12rem}
+.workout .focus{font-size:.82rem;color:var(--muted)}
+.timepill{font-size:.72rem;background:#edf8f3;color:#13744b;font-weight:850;padding:6px 8px;border-radius:999px;height:max-content;white-space:nowrap}
+.done-pill{font-size:.72rem;background:#eafaf1;color:#0f7a45;font-weight:850;padding:6px 8px;border-radius:999px;white-space:nowrap}
+.preview{margin:13px 0;display:grid;gap:6px}
+.preview div{font-size:.84rem;padding:8px 10px;background:#f8f9fb;border-radius:10px;color:#4b5563}
+.start-btn,.secondary-btn{width:100%;border:0;border-radius:13px;padding:13px 12px;font-weight:850;cursor:pointer;min-height:50px;font-size:.98rem}
+.start-btn{background:var(--accent);color:#fff}
+.secondary-btn{background:#f1f2f5;color:#3d4654}
+
+.gamedash{display:grid;grid-template-columns:1fr;gap:11px}
+.progress-track{height:13px;border-radius:999px;background:#edf0f4;overflow:hidden}
+.progress-fill{height:100%;width:0;background:linear-gradient(90deg,var(--accent),var(--accent2));transition:.3s}
+.stats{display:flex;justify-content:space-between;color:var(--muted);font-size:.8rem;margin-top:8px}
+.xp{font-size:2rem;line-height:1;font-weight:950}
+.xp small{font-size:.72rem;color:var(--muted);font-weight:650}
+.badges{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:6px}
+.badge{background:#f7f8fb;border:1px solid var(--line);border-radius:14px;padding:11px 6px;text-align:center}
+.badge .ico{font-size:1.5rem;filter:grayscale(1);opacity:.35}
+.badge.on .ico{filter:none;opacity:1}
+.badge small{display:block;font-size:.68rem;color:var(--muted);margin-top:3px;line-height:1.15}
+.badge.on small{color:var(--ink);font-weight:700}
+.reward-zone{background:linear-gradient(145deg,#fff,#f7f5ff);border:1px solid #ddd8ff}
+.reward-zone h3{margin:0 0 5px}
+.reward-zone p{margin:0;color:var(--muted);font-size:.87rem}
+.reward-btn{margin-top:12px;width:100%;border:0;border-radius:13px;background:#171a21;color:#fff;padding:13px;font-weight:850;cursor:pointer;min-height:50px}
+.reward-btn:disabled{opacity:.35;cursor:not-allowed}
+.reward-result{display:none;margin-top:11px;background:#171a21;color:#fff;border-radius:14px;padding:14px;font-size:.95rem}
+.reward-result.show{display:block;animation:pop .3s ease}
+@keyframes pop{from{opacity:0;transform:scale(.96)}to{opacity:1;transform:scale(1)}}
+
+.note{background:#fff8e9;border:1px solid #f2dfb1;border-radius:16px;padding:14px 15px;color:#574729;font-size:.87rem;margin-top:12px}
+.note b{color:#8a6413}
+.equip{display:grid;grid-template-columns:1fr;gap:9px}
+.equip>div{background:#f8f9fb;border-radius:12px;padding:11px 12px}
+.equip b{font-size:.92rem}
+.small{font-size:.8rem;color:var(--muted)}
+
+/* ===== BOTTOM NAV ===== */
+.mobile-nav{
+  position:fixed;left:50%;transform:translateX(-50%);
+  bottom:calc(10px + env(safe-area-inset-bottom));
+  width:min(560px,calc(100% - 20px));
+  height:64px;display:grid;grid-template-columns:repeat(4,1fr);gap:4px;
+  background:rgba(17,19,24,.97);border:1px solid rgba(255,255,255,.06);
+  border-radius:22px;padding:7px;z-index:40;box-shadow:0 15px 40px rgba(0,0,0,.28);backdrop-filter:blur(14px)
+}
+.mobile-nav button{
+  border:0;border-radius:15px;background:transparent;color:#cfd3dd;font-size:.68rem;font-weight:800;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;cursor:pointer
+}
+.mobile-nav button .ic{font-size:1.15rem;line-height:1}
+.mobile-nav button.active{background:rgba(255,255,255,.12);color:#fff}
+
+/* ===== TRAINER ===== */
+.trainer{position:fixed;inset:0;background:#0e1016;z-index:50;display:none;color:#fff}
+.trainer.show{display:block}
+.trainer.rest{background:#0c1f18}
+.trainer.prep{background:#1a1530}
+.trainer-inner{max-width:620px;margin:auto;min-height:100%;padding:calc(10px + env(safe-area-inset-top)) 14px calc(14px + env(safe-area-inset-bottom));display:flex;flex-direction:column}
+.trainer-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+.trainer-top .small{color:#aeb4c2}
+.trainer-top b{color:#fff}
+.close{border:1px solid rgba(255,255,255,.16);background:rgba(255,255,255,.06);color:#fff;border-radius:12px;padding:10px 14px;font-weight:800;cursor:pointer;min-height:44px}
+.trainer-stage{flex:1;display:flex;flex-direction:column;justify-content:center}
+.phase{font-size:.74rem;font-weight:900;letter-spacing:.12em;color:#9aa2b5;text-transform:uppercase}
+.exercise-name{font-size:clamp(1.9rem,7vw,2.7rem);line-height:1.03;margin:4px 0 4px}
+.variant{color:#c3cad9;font-size:.95rem;min-height:22px}
+.duo-box{display:none;margin:10px 0 0}
+body[data-profile="duo"] .duo-box{display:block}
+.duo-lines{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.duo-line{background:rgba(255,255,255,.06);border-radius:12px;padding:10px}
+.duo-line b{font-size:.76rem;display:block;color:#fff}
+.duo-line span{font-size:.78rem;color:#c3cad9}
+.demo{height:min(32svh,240px);border-radius:20px;background:rgba(255,255,255,.04);display:flex;align-items:center;justify-content:center;margin:14px 0 10px;overflow:hidden;color:#e7 e9f2;color:#e7e9f2}
+.demo svg{width:min(66vw,230px);height:min(28svh,200px)}
+.timer{text-align:center;font-weight:950;font-size:clamp(3.6rem,20vw,5.4rem);line-height:1;margin:2px 0}
+.timer.pulse{animation:tick .5s ease}
+@keyframes tick{0%{transform:scale(1)}40%{transform:scale(1.08)}100%{transform:scale(1)}}
+.timer-label{text-align:center;color:#aeb4c2;font-size:.82rem;letter-spacing:.06em}
+.next-up{text-align:center;color:#8f97a9;font-size:.86rem;margin-top:8px;min-height:20px}
+.next-up b{color:#fff}
+.mini-progress{height:8px;border-radius:999px;background:rgba(255,255,255,.1);overflow:hidden;margin:14px 0 8px}
+.mini-progress span{display:block;height:100%;background:var(--accent2);width:0;transition:.25s}
+.cue{background:rgba(255,255,255,.05);border-radius:14px;padding:12px;font-size:.9rem;color:#d3d9e6;min-height:48px;display:flex;align-items:center}
+.yt-btn{display:none;margin-top:9px;text-align:center;text-decoration:none;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);color:#fff;border-radius:12px;padding:11px;font-weight:800;font-size:.86rem}
+.yt-btn.show{display:block}
+.yt-btn .yt-ico{color:#ff5a5f}
+.round-info{text-align:center;color:#8f97a9;font-size:.78rem;margin-top:10px}
+.trainer-controls{display:grid;grid-template-columns:.9fr 1.5fr .9fr;gap:9px;margin-top:12px}
+.control{border:0;border-radius:16px;padding:16px 10px;font-weight:900;cursor:pointer;min-height:58px}
+.control.main{background:var(--accent);color:#fff;font-size:1.02rem}
+.control.side{background:rgba(255,255,255,.1);color:#fff}
+
+.finish{display:none;text-align:center;padding:20px 0;flex:1;flex-direction:column;justify-content:center}
+.finish.show{display:flex}
+.finish .medal{font-size:4rem}
+.finish h2{font-size:1.9rem;margin:6px 0}
+.finish p{color:#c3cad9;margin:0 0 14px}
+.finish .start-btn{max-width:360px;margin:6px auto 0}
+.finish .secondary-btn{max-width:360px;margin:8px auto 0;background:rgba(255,255,255,.1);color:#fff}
+
+.footer{text-align:center;color:#8a909d;font-size:.78rem;margin:22px 0 8px}
+
+@media(min-width:721px){
+  .schedule{grid-template-columns:repeat(4,1fr)}
+  .equip{grid-template-columns:repeat(3,1fr)}
+}
+</style>
+</head>
+<body data-profile="natalia">
+<div class="app">
+
+  <div class="profile-switch">
+    <button class="active" data-profile-btn="natalia">Natalia</button>
+    <button data-profile-btn="camilo">Camilo</button>
+    <button data-profile-btn="duo">Juntos</button>
+  </div>
+
+  <!-- ===== INICIO ===== -->
+  <section class="view active" id="view-inicio">
+    <header class="hero">
+      <div class="brand">DUO 20</div>
+      <h1>Entrenen juntos.<br>Distinto nivel.</h1>
+      <p>Tres sesiones cortas de fuerza por semana. El mismo circuito para los dos, con una variante para Natalia y otra más exigente para Camilo.</p>
+      <div class="hero-meta">
+        <span class="chip">15–20 min</span>
+        <span class="chip">3× semana</span>
+        <span class="chip">Timer con voz y vibración</span>
+        <span class="chip">Progreso + premios</span>
+      </div>
+    </header>
+
+    <section class="panel goal" style="margin-top:14px">
+      <h2 id="profileTitle">Natalia · firmeza + fuerza</h2>
+      <p id="profileDesc"></p>
+      <div class="goal-tags" id="goalTags"></div>
+      <div class="level">
+        <strong>Esfuerzo objetivo</strong>
+        <div class="big" id="rpe">6–7/10</div>
+        <span id="rpeText"></span>
+      </div>
+    </section>
+
+    <div class="panel" style="margin-top:12px;display:flex;justify-content:space-between;align-items:center;gap:12px">
+      <div>
+        <div class="small">HOY</div>
+        <div style="font-weight:900;font-size:1.05rem" id="todayText">—</div>
+      </div>
+      <button class="start-btn" style="width:auto;padding:13px 18px" id="todayStart">▶ Entrenar</button>
+    </div>
+
+    <h2 class="section-title">Equipo mínimo</h2>
+    <section class="panel">
+      <div class="equip">
+        <div><b>🎒 Mochila</b><div class="small">Libros o botellas para sumar carga poco a poco.</div></div>
+        <div><b>🪑 Silla o sofá firme</b><div class="small">Apoyo, flexiones inclinadas, hip thrust, equilibrio.</div></div>
+        <div><b>💧 2 botellas</b><div class="small">Sirven como mancuernas ligeras para press y remo.</div></div>
+      </div>
+    </section>
+
+    <div class="note" id="installHint">
+      <b>Instalar en tu iPhone:</b> abre este enlace en Safari, toca <b>Compartir</b> ⬆️ y luego <b>“Añadir a pantalla de inicio”</b>. Se abrirá a pantalla completa como una app.
+    </div>
+  </section>
+
+  <!-- ===== SEMANA ===== -->
+  <section class="view" id="view-semana">
+    <h2 class="section-title" style="margin-top:6px">Plan de 4 semanas</h2>
+    <div class="week-select">
+      <button class="week-btn active" data-week="1">Semana 1</button>
+      <button class="week-btn" data-week="2">Semana 2</button>
+      <button class="week-btn" data-week="3">Semana 3</button>
+      <button class="week-btn" data-week="4">Semana 4</button>
+    </div>
+    <p class="week-focus" id="weekFocus"></p>
+
+    <section class="schedule" id="schedule"></section>
+
+    <div class="note" id="runNote"><b>Para Natalia:</b> los días de fuerza el trote va suave, sin buscar velocidad. Si las piernas llegan cargadas, caminar o bajar el ritmo es mejor que convertir la mañana en una prueba.</div>
+  </section>
+
+  <!-- ===== ENTRENAR ===== -->
+  <section class="view" id="view-entrenar">
+    <h2 class="section-title" style="margin-top:6px">Entrenamientos · <span id="entWeek">Semana 1</span></h2>
+    <section class="workouts" id="workoutCards"></section>
+    <p class="small" style="margin-top:14px">La carga sube solo cuando el movimiento se siente claramente controlado. Ante dolor agudo, mareo o algo raro, se suspende la sesión.</p>
+  </section>
+
+  <!-- ===== PROGRESO ===== -->
+  <section class="view" id="view-progreso">
+    <h2 class="section-title" style="margin-top:6px">Juego de la semana</h2>
+    <section class="gamedash">
+      <div class="panel">
+        <div style="display:flex;justify-content:space-between;align-items:end;margin-bottom:9px">
+          <div>
+            <div class="small">PROGRESO DEL PERFIL · <span id="progWeek">S1</span></div>
+            <div style="font-weight:900" id="progressText">0 de 3 sesiones</div>
+          </div>
+          <div class="xp"><span id="xp">0</span> <small>XP</small></div>
+        </div>
+        <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+        <div class="stats"><span id="strXpLabel">Fuerza: +100 XP</span><span id="runXpLabel">Trote: +10 XP</span></div>
+      </div>
+
+      <div class="panel">
+        <div class="small" style="margin-bottom:8px">LOGROS</div>
+        <div class="badges" id="badges"></div>
+      </div>
+
+      <div class="panel reward-zone">
+        <h3>🎁 Sorpresa de la semana</h3>
+        <p id="rewardHint">Se habilita al completar las 3 sesiones de fuerza de la semana.</p>
+        <button class="reward-btn" id="rewardBtn" disabled>Desbloquear</button>
+        <div class="reward-result" id="rewardResult"></div>
+      </div>
+    </section>
+    <footer class="footer">DUO 20 · fuerza útil, poco tiempo y constancia</footer>
+  </section>
+
+</div>
+
+<nav class="mobile-nav" aria-label="Navegación">
+  <button class="active" data-nav="inicio"><span class="ic">⌂</span>Inicio</button>
+  <button data-nav="semana"><span class="ic">🗓</span>Semana</button>
+  <button data-nav="entrenar"><span class="ic">▶</span>Entrenar</button>
+  <button data-nav="progreso"><span class="ic">★</span>Progreso</button>
+</nav>
+
+<!-- ===== TRAINER OVERLAY ===== -->
+<div class="trainer" id="trainer">
+  <div class="trainer-inner">
+    <div class="trainer-top">
+      <div>
+        <div class="small" id="trainerWorkout">FUERZA A</div>
+        <b id="trainerProfile">Natalia</b>
+      </div>
+      <button class="close" id="closeTrainer">Cerrar</button>
+    </div>
+
+    <section class="trainer-stage" id="trainerStage">
+      <div id="activeWorkout">
+        <div class="phase" id="phase">PREPÁRENSE</div>
+        <div class="exercise-name" id="exerciseName">Listos</div>
+        <div class="variant" id="variant"></div>
+
+        <div class="duo-box">
+          <div class="duo-lines">
+            <div class="duo-line"><b>Natalia</b><span id="duoNatalia"></span></div>
+            <div class="duo-line"><b>Camilo</b><span id="duoCamilo"></span></div>
+          </div>
+        </div>
+
+        <div class="demo" id="demo"></div>
+        <div class="timer" id="timer">10</div>
+        <div class="timer-label" id="timerLabel">PREPÁRENSE</div>
+        <div class="next-up" id="nextUp"></div>
+        <div class="mini-progress"><span id="miniProgress"></span></div>
+        <div class="cue" id="cue"></div>
+        <a class="yt-btn" id="ytBtn" target="_blank" rel="noopener"><span class="yt-ico">▶</span> Ver técnica en YouTube</a>
+
+        <div class="trainer-controls">
+          <button class="control side" id="prevBtn">←</button>
+          <button class="control main" id="playBtn">Empezar</button>
+          <button class="control side" id="nextBtn">→</button>
+        </div>
+        <div class="round-info" id="roundInfo"></div>
+      </div>
+
+      <div class="finish" id="finish">
+        <div class="medal">⚡</div>
+        <h2>Sesión completada</h2>
+        <p id="finishText"></p>
+        <button class="start-btn" id="finishSave">Guardar +100 XP</button>
+        <button class="secondary-btn" id="finishClose">Volver</button>
+      </div>
+    </section>
+  </div>
+</div>
+
+<script>
+/* =========================================================
+   DUO 20 — mini app de fuerza para Natalia + Camilo
+   Diseño: entrenador funcional + UX móvil + gamificación
+   ========================================================= */
+
+const profiles = {
+  natalia:{
+    title:"Natalia · firmeza + fuerza",
+    desc:"Su trote de ~3 km ya cubre el cardio. Aquí la prioridad es glúteo, pierna, core y espalda para tonificar y conservar músculo, sin añadir otra sesión larga de cardio.",
+    tags:["Glúteo + pierna","Core + espalda","Técnica y control","Carga progresiva"],
+    rpe:"6–7/10",
+    rpeText:"Terminar cada bloque sintiendo que aún podrías hacer 2–3 repeticiones buenas."
+  },
+  camilo:{
+    title:"Camilo · fuerza + músculo",
+    desc:"Mismo circuito y mismo tiempo, con variantes más duras: más carga, mochila, tempo lento y ejercicios a una pierna para que el estímulo de fuerza sea real.",
+    tags:["Más carga / tempo","Unilateral","Flexiones en piso","Progresión semanal"],
+    rpe:"7–8/10",
+    rpeText:"Las últimas repeticiones deben costar, pero sin perder postura ni control."
+  },
+  duo:{
+    title:"Modo juntos · un reloj, dos niveles",
+    desc:"La sesión corre una sola vez. En cada ejercicio aparecen a la vez la variante de Natalia y la de Camilo, para que entrenen sincronizados.",
+    tags:["Mismo circuito","Dos variantes","20 min juntos","Un solo temporizador"],
+    rpe:"Cada uno a su nivel",
+    rpeText:"No compitan por velocidad: compitan por hacer mejor cada repetición."
+  }
+};
+
+/* Progresión real por semana: no solo más tiempo, sino carga/tempo/rango/pausas */
+const WEEKS={
+ 1:{focus:"Aprender el patrón", rounds:2, work:35, rest:25,
+    note:"Rango cómodo, técnica limpia, casi sin carga.",
+    tempo:"Baja en 2–3 s y controla la subida.",
+    loadN:"peso corporal", loadC:"peso corporal, tempo controlado"},
+ 2:{focus:"Tempo y control", rounds:3, work:35, rest:25,
+    note:"Misma técnica + excéntrica lenta y una pausa breve.",
+    tempo:"Excéntrica lenta de 3 s + 1 s de pausa abajo.",
+    loadN:"peso corporal con pausa", loadC:"mochila ligera"},
+ 3:{focus:"Carga y rango", rounds:3, work:40, rest:20,
+    note:"Rango completo y algo de carga o una pierna.",
+    tempo:"Rango completo, sin rebotes.",
+    loadN:"mochila ligera o unilateral", loadC:"mochila + unilateral"},
+ 4:{focus:"Consolidar fuerza", rounds:3, work:40, rest:20,
+    note:"Máxima carga que controles, con pausa en el punto difícil.",
+    tempo:"Pausa isométrica de 2 s donde más cuesta.",
+    loadN:"mochila / más rango", loadC:"mochila pesada / cámara lenta"}
+};
+
+/* Ejercicios revisados por prioridad: glúteo, pierna, core, espalda, empuje.
+   n = variante Natalia · c = variante Camilo · cue = técnica clave */
+const workouts = {
+ A:{ title:"Fuerza A", focus:"Cuerpo completo",
+   exercises:[
+    {name:"Sentadilla", anim:"squat", n:"Sentadilla al aire, 8–12 reps controladas.", c:"Sentadilla con mochila o goblet; baja 3 s.", cue:"Rodillas hacia la punta del pie. Pecho arriba, baja hasta donde controles."},
+    {name:"Flexión", anim:"push", n:"Flexión inclinada en sofá o silla firme.", c:"Flexión en piso; eleva los pies si ya es fácil.", cue:"Cuerpo en una línea. El pecho baja antes que la cabeza."},
+    {name:"Remo con mochila", anim:"row", n:"Mochila ligera, 10–12 reps.", c:"Más carga y 1 s de pausa arriba.", cue:"Espalda larga, lleva los codos hacia atrás sin encoger hombros."},
+    {name:"Hip thrust", anim:"bridge", n:"Hombros en el sofá, empuje con talones.", c:"Mochila sobre la pelvis; pausa 2 s arriba.", cue:"Termina apretando glúteo, sin arquear la zona baja de la espalda."},
+    {name:"Dead bug", anim:"deadbug", n:"Alterna brazo y pierna lento.", c:"Extensión más larga; pausa 1 s.", cue:"Zona lumbar pegada al piso. Mueve solo lo que puedas controlar."}
+   ]},
+ B:{ title:"Fuerza B", focus:"Piernas + glúteos",
+   exercises:[
+    {name:"Zancada atrás", anim:"lunge", n:"Con apoyo de silla si hace falta.", c:"Con mochila o zancada búlgara (pie atrás en silla).", cue:"Paso largo y baja vertical, la rodilla de atrás hacia el piso."},
+    {name:"Peso muerto rumano", anim:"rdl", n:"Botellas o mochila ligera; recorrido corto.", c:"Más carga y descenso lento de 3 s.", cue:"Cadera atrás, espalda neutra, la carga roza las piernas."},
+    {name:"Sentadilla lateral", anim:"lateral", n:"Alterna lados, rango cómodo.", c:"Mochila al pecho y más profundidad.", cue:"Una cadera viaja atrás; la otra pierna queda estirada."},
+    {name:"Puente a una pierna", anim:"bridge", q:"puente de glúteo a una pierna", n:"Una pierna, pausa 2 s arriba.", c:"Una pierna con mochila en la pelvis.", cue:"Cadera nivelada, empuja desde el talón de apoyo."},
+    {name:"Elevación de talón", anim:"calf", n:"Dos piernas con apoyo ligero.", c:"Una pierna o con mochila.", cue:"Sube alto, pausa arriba y baja lento; sin rebotar."}
+   ]},
+ C:{ title:"Fuerza C", focus:"Torso + core",
+   exercises:[
+    {name:"Flexión", anim:"push", n:"Inclinada en sofá o silla firme.", c:"Piso, diamante o pies elevados según nivel.", cue:"Costillas abajo y hombros lejos de las orejas."},
+    {name:"Remo con mochila", anim:"row", n:"Carga que permita 10–12 reps buenas.", c:"Más carga o 2 s de pausa arriba.", cue:"No gires el torso; termina llevando los codos atrás."},
+    {name:"Press de hombros", anim:"press", n:"Botellas de agua o mochila ligera.", c:"Mochila más pesada o press a un brazo.", cue:"Aprieta el abdomen; sube sin arquear la espalda."},
+    {name:"Y-T en el piso", anim:"yt", q:"Y T raises espalda ejercicio", n:"Sin peso, movimiento lento.", c:"Botellas muy ligeras y pausa arriba.", cue:"Piensa en juntar los omóplatos; cuello relajado."},
+    {name:"Plancha + toque", anim:"plank", q:"plancha toque de hombro shoulder tap", n:"Plancha alta con manos elevadas.", c:"Plancha en piso, toque de hombro alterno.", cue:"Pies algo abiertos; evita que la cadera rote."}
+   ]}
+};
+
+const warmup=[
+ {name:"Marcha activa",anim:"march",cue:"Activa el cuerpo sin buscar fatiga.",n:"Marcha cómoda.",c:"Marcha rápida o skipping bajo."},
+ {name:"Círculos de brazos",anim:"arms",cue:"Hombros sueltos, círculos que crecen.",n:"Círculos pequeños a medianos.",c:"Círculos amplios y controlados."},
+ {name:"Bisagra de cadera",anim:"rdl",cue:"Ensaya llevar la cadera atrás con espalda larga.",n:"Sin carga.",c:"Sin carga, tempo lento."},
+ {name:"Sentadilla suave",anim:"squat",cue:"Rango cómodo para preparar rodillas y cadera.",n:"Sentadilla parcial o completa.",c:"Sentadilla completa con pausa abajo."}
+];
+const cooldown=[
+ {name:"Respiración + calma",anim:"breathe",cue:"Respira lento y baja pulsaciones.",n:"Respiración tranquila.",c:"Respiración tranquila."},
+ {name:"Cadera y piernas",anim:"stretch",cue:"Estira sin rebotes ni dolor.",n:"30 s por lado.",c:"30 s por lado."},
+ {name:"Pecho y espalda",anim:"arms",cue:"Movilidad suave, sin forzar.",n:"Movimiento cómodo.",c:"Movimiento cómodo."}
+];
+
+const rewardsNatalia=[
+ "Camilo prepara tu desayuno o café favorito mañana.",
+ "15 minutos de masaje después de la ducha.",
+ "Tú eliges película o serie y Camilo resuelve el snack.",
+ "Salida corta por helado, café o postre; invita Camilo.",
+ "Una noche sin decidir qué comer: Camilo se encarga.",
+ "Mini cita de una hora, sin celulares, diligencias ni trabajo.",
+ "Un antojo pequeño sorpresa elegido por Camilo.",
+ "20 minutos de masaje de piernas con la música que tú elijas."
+];
+const rewardsCamilo=[
+ "Hoy eliges película o serie y también el snack.",
+ "Café o postre juntos para cerrar la semana.",
+ "20 minutos para desconectarte, sin pendientes.",
+ "Una comida que te guste como premio de la semana.",
+ "Mini plan de una hora juntos, sin trabajo ni diligencias."
+];
+
+let state={
+ profile:localStorage.getItem("duo20_profile")||"natalia",
+ week:Number(localStorage.getItem("duo20_week")||1),
+ currentWorkout:null, steps:[], stepIndex:0, remaining:0, interval:null, running:false,
+ wakeLock:null, audioCtx:null
+};
+
+/* ---------- claves de almacenamiento ---------- */
+function keyRun(day){return `duo20_natalia_w${state.week}_run_${day}`}
+function keyWork(profile,id){return `duo20_${profile}_w${state.week}_work_${id}`}
+function keyReward(profile){return `duo20_${profile}_w${state.week}_reward`}
+function keyWeekDone(profile,w){return `duo20_${profile}_w${w}_complete`}
+
+/* ---------- navegación entre vistas ---------- */
+function showView(v){
+ document.querySelectorAll(".view").forEach(s=>s.classList.toggle("active",s.id==="view-"+v));
+ document.querySelectorAll(".mobile-nav button").forEach(b=>b.classList.toggle("active",b.dataset.nav===v));
+ window.scrollTo({top:0,behavior:"smooth"});
+}
+document.querySelectorAll(".mobile-nav button").forEach(b=>b.onclick=()=>showView(b.dataset.nav));
+
+/* ---------- horario semanal ---------- */
+const DAYS=[["lun","Lun"],["mar","Mar"],["mie","Mié"],["jue","Jue"],["vie","Vie"],["sab","Sáb"],["dom","Dom"]];
+const schedules={
+ natalia:{lun:{t:"3 km suave + Fuerza A",s:1},mar:{t:"3 km habitual"},mie:{t:"3 km suave + Fuerza B",s:1},jue:{t:"3 km habitual"},vie:{t:"3 km suave + Fuerza C",s:1},sab:{t:"3 km fácil / movilidad"},dom:{t:"Muy suave o descanso"}},
+ camilo:{lun:{t:"Fuerza A",s:1},mar:{t:"Movilidad / caminata"},mie:{t:"Fuerza B",s:1},jue:{t:"Recuperación opcional"},vie:{t:"Fuerza C",s:1},sab:{t:"Actividad libre"},dom:{t:"Descanso / movilidad"}},
+ duo:{lun:{t:"Fuerza A juntos + 3 km Nat",s:1},mar:{t:"Nat 3 km · Cam opcional"},mie:{t:"Fuerza B juntos + 3 km Nat",s:1},jue:{t:"Nat 3 km · Cam recupera"},vie:{t:"Fuerza C juntos + 3 km Nat",s:1},sab:{t:"Actividad suave"},dom:{t:"Recuperación"}}
+};
+function renderSchedule(){
+ const s=schedules[state.profile];
+ document.getElementById("schedule").innerHTML=DAYS.map(([id,lbl])=>{
+  const d=s[id];const run=(state.profile!=="camilo")?`<input class="run-check" data-day="${id}" type="checkbox" title="Marcar trote">`:"";
+  return `<div class="day${d.s?" strength":""}"><b>${lbl}</b><span>${d.t}</span>${run}</div>`;
+ }).join("");
+ loadRuns();
+}
+
+/* ---------- perfil ---------- */
+function renderProfile(){
+ document.body.dataset.profile=state.profile;
+ const p=profiles[state.profile];
+ document.getElementById("profileTitle").textContent=p.title;
+ document.getElementById("profileDesc").textContent=p.desc;
+ document.getElementById("goalTags").innerHTML=p.tags.map(x=>`<span class="goal-tag">${x}</span>`).join("");
+ document.getElementById("rpe").textContent=p.rpe;
+ document.getElementById("rpeText").textContent=p.rpeText;
+ document.querySelectorAll("[data-profile-btn]").forEach(b=>b.classList.toggle("active",b.dataset.profileBtn===state.profile));
+ document.getElementById("runNote").style.display=state.profile==="camilo"?"none":"block";
+ document.getElementById("strXpLabel").textContent="Fuerza: +100 XP";
+ document.getElementById("runXpLabel").textContent=state.profile==="camilo"?"Semana completa: bonus":"Trote: +10 XP";
+ document.getElementById("rewardHint").textContent=state.profile==="camilo"
+   ? "Se habilita al completar las 3 sesiones de fuerza de la semana."
+   : "Cuando Natalia complete las 3 sesiones de fuerza, se desbloquea un detalle sorpresa.";
+ renderWeekMeta();
+ renderSchedule();
+ renderWorkoutCards();
+ renderToday();
+ refreshGame();
+}
+
+function renderWeekMeta(){
+ const w=WEEKS[state.week];
+ document.getElementById("weekFocus").innerHTML=`<b>Semana ${state.week} · ${w.focus}.</b> ${w.note} Trabajo ${w.work}s / descanso ${w.rest}s · ${w.rounds} rondas.`;
+ document.getElementById("entWeek").textContent="Semana "+state.week;
+ document.getElementById("progWeek").textContent="S"+state.week;
+ document.querySelectorAll(".week-btn").forEach(b=>b.classList.toggle("active",Number(b.dataset.week)===state.week));
+}
+
+function weekTime(){return state.week===1?15:20}
+
+function renderWorkoutCards(){
+ const p=state.profile==="duo"?"natalia":state.profile;
+ document.getElementById("workoutCards").innerHTML=Object.entries(workouts).map(([id,w])=>{
+  const done=localStorage.getItem(keyWork(p,id))==="1";
+  return `<article class="workout">
+   <div class="top">
+     <div><h3>${w.title}${done?" ✓":""}</h3><div class="focus">${w.focus}</div></div>
+     ${done?'<span class="done-pill">Hecha</span>':`<span class="timepill">${weekTime()} min</span>`}
+   </div>
+   <div class="preview">
+    ${w.exercises.slice(0,3).map(e=>`<div>${e.name}</div>`).join("")}
+    <div>+ ${w.exercises.length-3} ejercicios · ${WEEKS[state.week].rounds} rondas</div>
+   </div>
+   <button class="start-btn" onclick="openWorkout('${id}')">▶ ${done?"Repetir":"Iniciar"} sesión</button>
+  </article>`;
+ }).join("");
+}
+
+/* Sesión sugerida "hoy" según día real de la semana */
+function renderToday(){
+ const map={1:"A",3:"B",5:"C"}; // lun/mie/vie
+ const dow=new Date().getDay();
+ const id=map[dow];
+ const el=document.getElementById("todayText"), btn=document.getElementById("todayStart");
+ if(id){el.textContent=workouts[id].title+" · "+workouts[id].focus;btn.style.display="";btn.onclick=()=>openWorkout(id);}
+ else {el.textContent="Descanso activo o trote suave";btn.style.display="none";}
+}
+
+/* ---------- construir pasos con progresión ---------- */
+function buildSteps(workoutId){
+ const w=workouts[workoutId], W=WEEKS[state.week], arr=[];
+ arr.push({kind:"prep",name:"Prepárense",anim:"march",phase:"Preparación",duration:10,cue:"Colócate en posición. Empieza el circuito con el primer ejercicio.",n:"",c:""});
+ warmup.forEach(e=>arr.push({...e,kind:"work",phase:"Calentamiento",duration:30}));
+ for(let r=1;r<=W.rounds;r++){
+   w.exercises.forEach((e,i)=>{
+     const nMod=` (${W.loadN}). ${W.tempo}`;
+     const cMod=` (${W.loadC}). ${W.tempo}`;
+     arr.push({...e, kind:"work", phase:`Ronda ${r}/${W.rounds}`, duration:W.work, round:r,
+               n:e.n+nMod, c:e.c+cMod});
+     const last=i===w.exercises.length-1 && r===W.rounds;
+     arr.push({kind:"rest",name:last?"Fin del circuito":"Descanso",anim:"rest",
+               phase:"Descanso",duration:W.rest,round:r,
+               cue:"Respira y prepara el siguiente ejercicio.",n:"Descansa.",c:"Descansa."});
+   });
+ }
+ cooldown.forEach(e=>arr.push({...e,kind:"cool",phase:"Vuelta a la calma",duration:45}));
+ // precalcular "siguiente ejercicio de trabajo"
+ arr.forEach((s,idx)=>{
+   const nxt=arr.slice(idx+1).find(x=>x.kind==="work"||x.kind==="cool");
+   s.nextName=nxt?nxt.name:"Final";
+ });
+ return arr;
+}
+
+/* ---------- abrir / correr trainer ---------- */
+function openWorkout(id){
+ state.currentWorkout=id;state.steps=buildSteps(id);state.stepIndex=0;state.running=false;
+ clearInterval(state.interval);
+ const t=document.getElementById("trainer");t.classList.add("show");
+ document.getElementById("activeWorkout").style.display="block";
+ document.getElementById("finish").classList.remove("show");
+ document.getElementById("trainerWorkout").textContent=workouts[id].title+" · "+workouts[id].focus;
+ document.getElementById("trainerProfile").textContent=state.profile==="duo"?"Modo juntos":(state.profile==="natalia"?"Natalia":"Camilo");
+ requestWakeLock();
+ showStep(true);
+}
+
+function stageClass(kind){
+ const t=document.getElementById("trainer");
+ t.classList.toggle("rest",kind==="rest");
+ t.classList.toggle("prep",kind==="prep");
+}
+
+function showStep(reset){
+ const s=state.steps[state.stepIndex];
+ if(!s){finishWorkout();return}
+ if(reset) state.remaining=s.duration;
+ stageClass(s.kind);
+ document.getElementById("phase").textContent=s.phase;
+ document.getElementById("exerciseName").textContent=s.name;
+ document.getElementById("demo").innerHTML=demoSvg(s.anim);
+ document.getElementById("cue").textContent=s.cue||"";
+ document.getElementById("timer").textContent=state.remaining;
+ document.getElementById("variant").textContent=variantText(s);
+ document.getElementById("duoNatalia").textContent=s.n||"";
+ document.getElementById("duoCamilo").textContent=s.c||"";
+ const total=state.steps.length;
+ document.getElementById("roundInfo").textContent=`Paso ${state.stepIndex+1} de ${total}`+(s.round?` · Ronda ${s.round}/${WEEKS[state.week].rounds}`:"");
+ document.getElementById("miniProgress").style.width=`${(state.stepIndex/total)*100}%`;
+ document.getElementById("timerLabel").textContent=
+   s.kind==="rest"?"RECUPERA": s.kind==="prep"?"PREPÁRENSE": s.kind==="cool"?"ESTIRA":"TRABAJA CON CONTROL";
+ document.getElementById("nextUp").innerHTML=
+   (s.kind==="rest"||s.kind==="prep") ? `Sigue: <b>${s.nextName}</b>` :
+   (s.stepIndex===total-1?"":`Después: <b>${s.nextName}</b>`);
+ document.getElementById("playBtn").textContent=state.running?"Pausa":(state.stepIndex===0&&!state.running?"Empezar":"Continuar");
+ // enlace a video corto de YouTube según el ejercicio
+ const yt=document.getElementById("ytBtn");
+ if(s.kind==="work"||s.kind==="cool"){
+   const q=encodeURIComponent((s.q||s.name)+" ejercicio técnica short");
+   yt.href="https://www.youtube.com/results?search_query="+q+"&sp=EgIYAQ%253D%253D"; // filtro: videos cortos
+   yt.classList.add("show");
+ } else yt.classList.remove("show");
+}
+
+function variantText(s){
+ if(state.profile==="natalia")return s.n||"";
+ if(state.profile==="camilo")return s.c||"";
+ return "Cada uno usa su variante de abajo.";
+}
+
+/* ---------- temporizador ---------- */
+function toggleTimer(){
+ if(state.running){pauseTimer();return}
+ state.running=true;document.getElementById("playBtn").textContent="Pausa";
+ requestWakeLock();
+ state.interval=setInterval(()=>{
+   state.remaining--;
+   const tEl=document.getElementById("timer");
+   tEl.textContent=Math.max(0,state.remaining);
+   tEl.classList.remove("pulse");void tEl.offsetWidth;tEl.classList.add("pulse");
+   const s=state.steps[state.stepIndex];
+   const elapsed=s.duration-state.remaining;
+   document.getElementById("miniProgress").style.width=`${Math.min(100,((state.stepIndex+elapsed/s.duration)/state.steps.length)*100)}%`;
+   if(state.remaining<=3 && state.remaining>0){beep(660,.08);vibrate(30)}
+   if(state.remaining<=0){
+     clearInterval(state.interval);state.running=false;state.stepIndex++;
+     if(state.stepIndex>=state.steps.length){beep(880,.25);vibrate([60,40,120]);finishWorkout()}
+     else {
+       const next=state.steps[state.stepIndex];
+       beep(next.kind==="rest"?440:880,.18);vibrate(next.kind==="rest"?[40,30,40]:120);
+       showStep(true);toggleTimer();
+     }
+   }
+ },1000);
+}
+function pauseTimer(){clearInterval(state.interval);state.running=false;document.getElementById("playBtn").textContent="Continuar";releaseWakeLock()}
+function nextStep(){pauseTimer();state.stepIndex=Math.min(state.steps.length-1,state.stepIndex+1);showStep(true)}
+function prevStep(){pauseTimer();state.stepIndex=Math.max(0,state.stepIndex-1);showStep(true)}
+
+function finishWorkout(){
+ pauseTimer();releaseWakeLock();
+ document.getElementById("activeWorkout").style.display="none";
+ const f=document.getElementById("finish");f.classList.add("show");
+ document.getElementById("finishText").textContent=state.profile==="duo"
+   ?"Los dos completaron la misma sesión, cada uno a su nivel."
+   :"Sesión terminada. Calidad antes que velocidad.";
+}
+
+function saveWorkout(){
+ const profilesToSave=state.profile==="duo"?["natalia","camilo"]:[state.profile];
+ profilesToSave.forEach(p=>{
+   localStorage.setItem(keyWork(p,state.currentWorkout),"1");
+   checkWeekComplete(p);
+ });
+ refreshGame();renderWorkoutCards();renderToday();
+ closeTrainer();
+ showView("progreso");
+}
+
+function closeTrainer(){pauseTimer();releaseWakeLock();document.getElementById("trainer").classList.remove("show")}
+
+/* ---------- trotes ---------- */
+function loadRuns(){
+ document.querySelectorAll(".run-check").forEach(ch=>{
+   ch.checked=localStorage.getItem(keyRun(ch.dataset.day))==="1";
+   ch.onchange=()=>{localStorage.setItem(keyRun(ch.dataset.day),ch.checked?"1":"0");vibrate(20);refreshGame()}
+ });
+}
+
+/* ---------- gamificación ---------- */
+function strengthDone(p){let d=0;["A","B","C"].forEach(id=>{if(localStorage.getItem(keyWork(p,id))==="1")d++});return d}
+function runsDone(){let r=0;document.querySelectorAll(".run-check").forEach(c=>{if(c.checked)r++});return r}
+
+function checkWeekComplete(p){
+ if(strengthDone(p)>=3) localStorage.setItem(keyWeekDone(p,state.week),"1");
+}
+function consecutiveWeeks(p){
+ let c=0;for(let w=1;w<=4;w++){if(localStorage.getItem(keyWeekDone(p,w))==="1")c++;else break}return c;
+}
+
+function refreshGame(){
+ const p=state.profile==="duo"?"natalia":state.profile;
+ const done=strengthDone(p);
+ const runDone=(p==="natalia")?runsDone():0;
+ const streak=consecutiveWeeks(p);
+ const xp=done*100+runDone*10+streak*50;
+ document.getElementById("xp").textContent=xp;
+ document.getElementById("progressText").textContent=`${done} de 3 sesiones`;
+ document.getElementById("progressFill").style.width=`${done/3*100}%`;
+
+ // logros
+ const badges=[
+   {on:done>=1,ico:"🔥",label:"Primera sesión"},
+   {on:done>=3,ico:"🏅",label:"Semana de fuerza"},
+   {on:runDone>=3,ico:"👟",label:"Trotes al día",hide:p!=="natalia"},
+   {on:streak>=2,ico:"⚡",label:"2 semanas seguidas"},
+   {on:streak>=4,ico:"👑",label:"Plan completo"},
+   {on:localStorage.getItem(keyReward(p)),ico:"🎁",label:"Premio ganado"}
+ ].filter(b=>!b.hide);
+ document.getElementById("badges").innerHTML=badges.map(b=>
+   `<div class="badge${b.on?" on":""}"><div class="ico">${b.ico}</div><small>${b.label}</small></div>`).join("");
+
+ const btn=document.getElementById("rewardBtn");btn.disabled=done<3;
+ const rr=document.getElementById("rewardResult");
+ const saved=localStorage.getItem(keyReward(p));
+ if(saved){rr.textContent="🎁 "+saved;rr.classList.add("show")}else rr.classList.remove("show");
+}
+
+function revealReward(){
+ const p=state.profile==="duo"?"natalia":state.profile, key=keyReward(p);
+ const pool=p==="camilo"?rewardsCamilo:rewardsNatalia;
+ if(!localStorage.getItem(key))localStorage.setItem(key,pool[Math.floor(Math.random()*pool.length)]);
+ vibrate([40,40,120]);beep(880,.2);
+ refreshGame();
+}
+
+/* ---------- sonido + vibración + wake lock ---------- */
+function beep(freq,dur){
+ try{
+   if(!state.audioCtx) state.audioCtx=new (window.AudioContext||window.webkitAudioContext)();
+   const ctx=state.audioCtx, o=ctx.createOscillator(), g=ctx.createGain();
+   o.type="sine";o.frequency.value=freq;o.connect(g);g.connect(ctx.destination);
+   g.gain.setValueAtTime(.001,ctx.currentTime);
+   g.gain.exponentialRampToValueAtTime(.25,ctx.currentTime+.02);
+   g.gain.exponentialRampToValueAtTime(.001,ctx.currentTime+dur);
+   o.start();o.stop(ctx.currentTime+dur+.02);
+ }catch(e){}
+}
+function vibrate(pat){try{if(navigator.vibrate)navigator.vibrate(pat)}catch(e){}}
+async function requestWakeLock(){
+ try{if("wakeLock" in navigator && !state.wakeLock){state.wakeLock=await navigator.wakeLock.request("screen");
+   state.wakeLock.addEventListener("release",()=>{state.wakeLock=null})}}catch(e){}
+}
+function releaseWakeLock(){try{if(state.wakeLock){state.wakeLock.release();state.wakeLock=null}}catch(e){}}
+document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible"&&state.running)requestWakeLock()});
+
+/* ---------- ilustraciones SVG (coaching, no anatómicas) ---------- */
+function baseSvg(content){
+ return `<svg viewBox="0 0 120 120" role="img" aria-label="Demostración animada">
+ <g fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round">${content}</g></svg>`;
+}
+function demoSvg(type){
+ const head=`<circle cx="60" cy="18" r="7" fill="currentColor" stroke="none"/>`;
+ const ground=`<line x1="16" y1="105" x2="104" y2="105" opacity=".16"/>`;
+ if(type==="squat") return baseSvg(`${ground}<g><animateTransform attributeName="transform" type="translate" values="0 0;0 15;0 0" dur="1.8s" repeatCount="indefinite"/>${head}<line x1="60" y1="29" x2="60" y2="58"/><line x1="60" y1="38" x2="42" y2="49"/><line x1="60" y1="38" x2="78" y2="49"/><polyline points="60,58 43,78 34,101"/><polyline points="60,58 77,78 86,101"/></g>`);
+ if(type==="push") return baseSvg(`${ground}<circle cx="32" cy="51" r="6" fill="currentColor" stroke="none"><animate attributeName="cy" values="48;58;48" dur="1.7s" repeatCount="indefinite"/></circle><line x1="39" y1="54" x2="78" y2="67"><animate attributeName="y1" values="51;61;51" dur="1.7s" repeatCount="indefinite"/><animate attributeName="y2" values="64;72;64" dur="1.7s" repeatCount="indefinite"/></line><line x1="44" y1="56" x2="37" y2="98"><animate attributeName="y1" values="53;63;53" dur="1.7s" repeatCount="indefinite"/></line><line x1="78" y1="67" x2="99" y2="101"><animate attributeName="y1" values="64;72;64" dur="1.7s" repeatCount="indefinite"/></line>`);
+ if(type==="row") return baseSvg(`${ground}${head}<g transform="rotate(28 60 56)"><line x1="60" y1="29" x2="60" y2="64"/><line x1="60" y1="42" x2="79" y2="66"><animate attributeName="x2" values="82;66;82" dur="1.5s" repeatCount="indefinite"/><animate attributeName="y2" values="70;53;70" dur="1.5s" repeatCount="indefinite"/></line></g><line x1="60" y1="64" x2="45" y2="101"/><line x1="60" y1="64" x2="79" y2="101"/><rect x="76" y="68" width="18" height="12" rx="3" stroke-width="3"/>`);
+ if(type==="bridge") return baseSvg(`${ground}<circle cx="25" cy="78" r="6" fill="currentColor" stroke="none"/><line x1="32" y1="80" x2="63" y2="80"><animate attributeName="y2" values="80;58;80" dur="1.8s" repeatCount="indefinite"/></line><line x1="63" y1="80" x2="87" y2="79"><animate attributeName="y1" values="80;58;80" dur="1.8s" repeatCount="indefinite"/></line><line x1="87" y1="79" x2="101" y2="102"/>`);
+ if(type==="deadbug") return baseSvg(`${ground}<circle cx="50" cy="74" r="6" fill="currentColor" stroke="none"/><line x1="57" y1="76" x2="78" y2="76"/><line x1="59" y1="72" x2="42" y2="43"><animate attributeName="x2" values="42;27;42" dur="1.8s" repeatCount="indefinite"/><animate attributeName="y2" values="43;26;43" dur="1.8s" repeatCount="indefinite"/></line><line x1="78" y1="76" x2="92" y2="57"><animate attributeName="x2" values="92;106;92" dur="1.8s" repeatCount="indefinite"/><animate attributeName="y2" values="57;42;57" dur="1.8s" repeatCount="indefinite"/></line><line x1="78" y1="76" x2="95" y2="98"/>`);
+ if(type==="lunge") return baseSvg(`${ground}<g><animateTransform attributeName="transform" type="translate" values="0 0;0 11;0 0" dur="1.8s" repeatCount="indefinite"/>${head}<line x1="60" y1="29" x2="60" y2="61"/><line x1="60" y1="40" x2="46" y2="55"/><line x1="60" y1="40" x2="74" y2="55"/><polyline points="60,61 43,78 36,102"/><polyline points="60,61 79,78 99,101"/></g>`);
+ if(type==="rdl") return baseSvg(`${ground}<g><animateTransform attributeName="transform" type="rotate" values="0 60 64;38 60 64;0 60 64" dur="1.9s" repeatCount="indefinite"/>${head}<line x1="60" y1="29" x2="60" y2="64"/><line x1="60" y1="42" x2="75" y2="70"/></g><line x1="60" y1="64" x2="48" y2="101"/><line x1="60" y1="64" x2="73" y2="101"/><rect x="72" y="69" width="18" height="12" rx="3" stroke-width="3"/>`);
+ if(type==="lateral") return baseSvg(`${ground}${head}<line x1="60" y1="29" x2="60" y2="60"/><line x1="60" y1="39" x2="43" y2="49"/><line x1="60" y1="39" x2="77" y2="49"/><polyline points="60,60 43,77 27,101"><animate attributeName="points" values="60,60 43,77 27,101;60,69 36,81 22,101;60,60 43,77 27,101" dur="1.8s" repeatCount="indefinite"/></polyline><line x1="60" y1="60" x2="96" y2="101"/>`);
+ if(type==="calf") return baseSvg(`${ground}<g><animateTransform attributeName="transform" type="translate" values="0 0;0 -7;0 0" dur="1.4s" repeatCount="indefinite"/>${head}<line x1="60" y1="29" x2="60" y2="62"/><line x1="60" y1="40" x2="42" y2="52"/><line x1="60" y1="40" x2="78" y2="52"/><line x1="60" y1="62" x2="49" y2="101"/><line x1="60" y1="62" x2="71" y2="101"/></g>`);
+ if(type==="press") return baseSvg(`${ground}${head}<line x1="60" y1="29" x2="60" y2="64"/><line x1="60" y1="39" x2="43" y2="51"><animate attributeName="y2" values="51;16;51" dur="1.6s" repeatCount="indefinite"/></line><line x1="60" y1="39" x2="77" y2="51"><animate attributeName="y2" values="51;16;51" dur="1.6s" repeatCount="indefinite"/></line><line x1="60" y1="64" x2="48" y2="101"/><line x1="60" y1="64" x2="72" y2="101"/>`);
+ if(type==="yt") return baseSvg(`${ground}<circle cx="60" cy="66" r="6" fill="currentColor" stroke="none"/><line x1="31" y1="73" x2="89" y2="73"/><line x1="48" y1="71" x2="25" y2="53"><animate attributeName="x2" values="25;15;25" dur="1.7s" repeatCount="indefinite"/><animate attributeName="y2" values="53;36;53" dur="1.7s" repeatCount="indefinite"/></line><line x1="72" y1="71" x2="95" y2="53"><animate attributeName="x2" values="95;105;95" dur="1.7s" repeatCount="indefinite"/><animate attributeName="y2" values="53;36;53" dur="1.7s" repeatCount="indefinite"/></line>`);
+ if(type==="plank") return baseSvg(`${ground}<circle cx="32" cy="50" r="6" fill="currentColor" stroke="none"/><line x1="39" y1="55" x2="79" y2="68"/><line x1="79" y1="68" x2="99" y2="101"/><line x1="44" y1="57" x2="34" y2="100"/><line x1="48" y1="57" x2="54" y2="94"><animate attributeName="x2" values="54;37;54" dur="1.6s" repeatCount="indefinite"/><animate attributeName="y2" values="94;55;94" dur="1.6s" repeatCount="indefinite"/></line>`);
+ if(type==="march") return baseSvg(`${ground}${head}<line x1="60" y1="29" x2="60" y2="62"/><line x1="60" y1="40" x2="43" y2="53"/><line x1="60" y1="40" x2="77" y2="53"/><line x1="60" y1="62" x2="45" y2="101"/><line x1="60" y1="62" x2="76" y2="101"><animate attributeName="y2" values="101;73;101" dur="1.2s" repeatCount="indefinite"/><animate attributeName="x2" values="76;83;76" dur="1.2s" repeatCount="indefinite"/></line>`);
+ if(type==="arms") return baseSvg(`${ground}${head}<line x1="60" y1="29" x2="60" y2="64"/><line x1="60" y1="64" x2="48" y2="101"/><line x1="60" y1="64" x2="72" y2="101"/><g><animateTransform attributeName="transform" type="rotate" values="-15 60 39;25 60 39;-15 60 39" dur="1.7s" repeatCount="indefinite"/><line x1="60" y1="39" x2="31" y2="38"/><line x1="60" y1="39" x2="89" y2="38"/></g>`);
+ if(type==="stretch") return baseSvg(`${ground}${head}<line x1="60" y1="29" x2="60" y2="61"/><line x1="60" y1="61" x2="38" y2="101"/><line x1="60" y1="61" x2="88" y2="101"/><line x1="60" y1="40" x2="37" y2="80"><animate attributeName="x2" values="37;27;37" dur="2s" repeatCount="indefinite"/></line>`);
+ if(type==="breathe") return baseSvg(`${ground}${head}<line x1="60" y1="29" x2="60" y2="64"/><line x1="60" y1="64" x2="48" y2="101"/><line x1="60" y1="64" x2="72" y2="101"/><circle cx="60" cy="47" r="12" opacity=".18"><animate attributeName="r" values="9;17;9" dur="4s" repeatCount="indefinite"/></circle>`);
+ return baseSvg(`<circle cx="60" cy="60" r="26" opacity=".16"><animate attributeName="r" values="22;30;22" dur="${type==="rest"?"2":"3"}s" repeatCount="indefinite"/></circle><text x="60" y="65" text-anchor="middle" fill="currentColor" stroke="none" font-size="13">DESCANSO</text>`);
+}
+
+/* ---------- eventos ---------- */
+document.querySelectorAll("[data-profile-btn]").forEach(b=>b.onclick=()=>{
+ state.profile=b.dataset.profileBtn;localStorage.setItem("duo20_profile",state.profile);renderProfile()
+});
+document.querySelectorAll(".week-btn").forEach(b=>b.onclick=()=>{
+ state.week=Number(b.dataset.week);localStorage.setItem("duo20_week",state.week);renderProfile()
+});
+document.getElementById("playBtn").onclick=()=>{if(!state.audioCtx)beep(880,.001);toggleTimer()};
+document.getElementById("nextBtn").onclick=nextStep;
+document.getElementById("prevBtn").onclick=prevStep;
+document.getElementById("closeTrainer").onclick=closeTrainer;
+document.getElementById("finishSave").onclick=saveWorkout;
+document.getElementById("finishClose").onclick=closeTrainer;
+document.getElementById("rewardBtn").onclick=revealReward;
+
+/* ---------- PWA: icono PNG dinámico + manifest en runtime ---------- */
+(function pwa(){
+ try{
+   const c=document.createElement("canvas");c.width=c.height=512;const x=c.getContext("2d");
+   const r=96;x.fillStyle="#111318";
+   x.beginPath();x.moveTo(r,0);x.arcTo(512,0,512,512,r);x.arcTo(512,512,0,512,r);x.arcTo(0,512,0,0,r);x.arcTo(0,0,512,0,r);x.closePath();x.fill();
+   const g=x.createLinearGradient(0,120,512,400);g.addColorStop(0,"#635bff");g.addColorStop(1,"#9c7cff");
+   x.fillStyle=g;x.font="900 250px -apple-system,Segoe UI,Arial";x.textAlign="center";x.textBaseline="middle";
+   x.fillText("20",256,300);
+   x.fillStyle="#eef";x.font="700 70px -apple-system,Segoe UI,Arial";x.fillText("DUO",256,140);
+   const png=c.toDataURL("image/png");
+   let ai=document.getElementById("appleIcon");ai.setAttribute("href",png);
+   const manifest={name:"DUO 20",short_name:"DUO 20",display:"standalone",orientation:"portrait",
+     background_color:"#111318",theme_color:"#111318",start_url:"./",scope:"./",
+     icons:[{src:png,sizes:"512x512",type:"image/png",purpose:"any maskable"},{src:png,sizes:"192x192",type:"image/png",purpose:"any"}]};
+   const blob=new Blob([JSON.stringify(manifest)],{type:"application/manifest+json"});
+   const ml=document.createElement("link");ml.rel="manifest";ml.href=URL.createObjectURL(blob);document.head.appendChild(ml);
+ }catch(e){}
+ // ocultar hint si ya está instalada
+ if(window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone){
+   const h=document.getElementById("installHint");if(h)h.style.display="none";
+ }
+})();
+
+/* ---------- init ---------- */
+renderProfile();
+</script>
+</body>
+</html>
