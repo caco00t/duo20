@@ -81,6 +81,9 @@ button,input{font:inherit}
 .run-check{display:none;margin-top:8px;width:21px;height:21px;accent-color:var(--ok)}
 body[data-profile="natalia"] .run-check,body[data-profile="duo"] .run-check{display:inline-block}
 
+.fin-row{display:flex;align-items:center;gap:11px;background:#fff;border:1px solid var(--line);border-radius:14px;padding:13px 14px;margin:0 0 12px;font-weight:750;cursor:pointer}
+.fin-row input{width:22px;height:22px;accent-color:var(--accent);flex:0 0 auto}
+.fin-row small{color:var(--muted);font-weight:500}
 .workouts{display:grid;grid-template-columns:1fr;gap:11px}
 .workout{background:#fff;border:1px solid var(--line);border-radius:20px;padding:16px;box-shadow:0 9px 24px rgba(20,24,35,.045)}
 .workout .top{display:flex;justify-content:space-between;gap:8px;align-items:flex-start}
@@ -269,6 +272,10 @@ body[data-profile="duo"] .duo-box{display:block}
   <!-- ===== ENTRENAR ===== -->
   <section class="view" id="view-entrenar">
     <h2 class="section-title" style="margin-top:6px">Entrenamientos · <span id="entWeek">Semana 1</span></h2>
+    <label class="fin-row" for="finToggle">
+      <input type="checkbox" id="finToggle">
+      <span>➕ Finisher brazo + abdomen <small>(opcional · +3–4 min al final)</small></span>
+    </label>
     <section class="workouts" id="workoutCards"></section>
     <p class="small" style="margin-top:14px">La carga sube solo cuando el movimiento se siente claramente controlado. Ante dolor agudo, mareo o algo raro, se suspende la sesión.</p>
   </section>
@@ -449,6 +456,14 @@ const warmup=[
  {name:"Bisagra de cadera",anim:"rdl",cue:"Ensaya llevar la cadera atrás con espalda larga.",n:"Sin carga.",c:"Sin carga, tempo lento."},
  {name:"Sentadilla suave",anim:"squat",cue:"Rango cómodo para preparar rodillas y cadera.",n:"Sentadilla parcial o completa.",c:"Sentadilla completa con pausa abajo."}
 ];
+/* Finisher opcional: brazo + abdomen, 1 ronda rápida (~3–4 min) */
+const finisher=[
+ {name:"Fondos de tríceps", anim:"dip", q:"fondos de triceps en silla", n:"En silla, pies cerca del cuerpo.", c:"Pies lejos o una pierna elevada.", cue:"Codos hacia atrás, baja controlando; hombros lejos de las orejas."},
+ {name:"Curl de bíceps", anim:"curl", q:"curl de biceps mancuerna", n:"Botellas o mochila ligera.", c:"Mochila más pesada o subida en 3 s.", cue:"Codos pegados al cuerpo; sube y baja sin balancear."},
+ {name:"Bicicleta abdominal", anim:"bicycle", q:"bicicleta abdominal oblicuos", n:"Ritmo lento y controlado.", c:"Piernas más extendidas y más lento.", cue:"Codo hacia la rodilla contraria; zona lumbar pegada al piso."},
+ {name:"Plancha", anim:"plank", q:"plancha abdominal isometrica", n:"Plancha alta, aguanta firme.", c:"Plancha en antebrazos; suma segundos.", cue:"Glúteo y abdomen apretados; la cadera ni sube ni cae."}
+];
+
 const cooldown=[
  {name:"Respiración + calma",anim:"breathe",cue:"Respira lento y baja pulsaciones.",n:"Respiración tranquila.",c:"Respiración tranquila."},
  {name:"Cadera y piernas",anim:"stretch",cue:"Estira sin rebotes ni dolor.",n:"30 s por lado.",c:"30 s por lado."},
@@ -542,6 +557,7 @@ function renderWeekMeta(){
 }
 
 function weekTime(){return state.week===1?15:20}
+function getFinisher(){return localStorage.getItem("duo20_finisher")==="1"}
 
 function renderWorkoutCards(){
  const p=state.profile==="duo"?"natalia":state.profile;
@@ -550,11 +566,11 @@ function renderWorkoutCards(){
   return `<article class="workout">
    <div class="top">
      <div><h3>${w.title}${done?" ✓":""}</h3><div class="focus">${w.focus}</div></div>
-     ${done?'<span class="done-pill">Hecha</span>':`<span class="timepill">${weekTime()} min</span>`}
+     ${done?'<span class="done-pill">Hecha</span>':`<span class="timepill">${weekTime()}${getFinisher()?"–"+(weekTime()+4):""} min</span>`}
    </div>
    <div class="preview">
     ${w.exercises.slice(0,3).map(e=>`<div>${e.name}</div>`).join("")}
-    <div>+ ${w.exercises.length-3} ejercicios · ${WEEKS[state.week].rounds} rondas</div>
+    <div>+ ${w.exercises.length-3} ejercicios · ${WEEKS[state.week].rounds} rondas${getFinisher()?" · + finisher 💪":""}</div>
    </div>
    <button class="start-btn" onclick="openWorkout('${id}')">▶ ${done?"Repetir":"Iniciar"} sesión</button>
   </article>`;
@@ -586,6 +602,12 @@ function buildSteps(workoutId){
      arr.push({kind:"rest",name:last?"Fin del circuito":"Descanso",anim:"rest",
                phase:"Descanso",duration:W.rest,round:r,
                cue:"Respira y prepara el siguiente ejercicio.",n:"Descansa.",c:"Descansa."});
+   });
+ }
+ if(getFinisher()){
+   finisher.forEach((e,i)=>{
+     arr.push({...e,kind:"work",phase:"Finisher · brazo + abdomen",duration:35});
+     if(i<finisher.length-1) arr.push({kind:"rest",name:"Descanso",anim:"rest",phase:"Descanso",duration:15,cue:"Respira y sigue con el finisher.",n:"Descansa.",c:"Descansa."});
    });
  }
  cooldown.forEach(e=>arr.push({...e,kind:"cool",phase:"Vuelta a la calma",duration:45}));
@@ -802,6 +824,9 @@ function demoSvg(type){
  if(type==="march") return baseSvg(`${ground}${head}<line x1="60" y1="29" x2="60" y2="62"/><line x1="60" y1="40" x2="43" y2="53"/><line x1="60" y1="40" x2="77" y2="53"/><line x1="60" y1="62" x2="45" y2="101"/><line x1="60" y1="62" x2="76" y2="101"><animate attributeName="y2" values="101;73;101" dur="1.2s" repeatCount="indefinite"/><animate attributeName="x2" values="76;83;76" dur="1.2s" repeatCount="indefinite"/></line>`);
  if(type==="arms") return baseSvg(`${ground}${head}<line x1="60" y1="29" x2="60" y2="64"/><line x1="60" y1="64" x2="48" y2="101"/><line x1="60" y1="64" x2="72" y2="101"/><g><animateTransform attributeName="transform" type="rotate" values="-15 60 39;25 60 39;-15 60 39" dur="1.7s" repeatCount="indefinite"/><line x1="60" y1="39" x2="31" y2="38"/><line x1="60" y1="39" x2="89" y2="38"/></g>`);
  if(type==="stretch") return baseSvg(`${ground}${head}<line x1="60" y1="29" x2="60" y2="61"/><line x1="60" y1="61" x2="38" y2="101"/><line x1="60" y1="61" x2="88" y2="101"/><line x1="60" y1="40" x2="37" y2="80"><animate attributeName="x2" values="37;27;37" dur="2s" repeatCount="indefinite"/></line>`);
+ if(type==="dip") return baseSvg(`${ground}<rect x="74" y="66" width="18" height="12" rx="3" stroke-width="3"/><g><animateTransform attributeName="transform" type="translate" values="0 0;0 12;0 0" dur="1.6s" repeatCount="indefinite"/>${head}<line x1="60" y1="29" x2="60" y2="66"/><polyline points="60,40 80,52 80,72"/><line x1="60" y1="66" x2="50" y2="101"/><line x1="60" y1="66" x2="70" y2="101"/></g>`);
+ if(type==="curl") return baseSvg(`${ground}${head}<line x1="60" y1="29" x2="60" y2="64"/><line x1="60" y1="64" x2="48" y2="101"/><line x1="60" y1="64" x2="72" y2="101"/><line x1="60" y1="42" x2="60" y2="60"/><g><animateTransform attributeName="transform" type="rotate" values="0 60 60;-120 60 60;0 60 60" dur="1.7s" repeatCount="indefinite"/><line x1="60" y1="60" x2="82" y2="66"/><rect x="80" y="61" width="14" height="10" rx="2" stroke-width="3"/></g>`);
+ if(type==="bicycle") return baseSvg(`${ground}<circle cx="30" cy="72" r="6" fill="currentColor" stroke="none"/><line x1="36" y1="74" x2="66" y2="74"/><line x1="66" y1="74" x2="86" y2="60"><animate attributeName="x2" values="86;70;86" dur="1.4s" repeatCount="indefinite"/><animate attributeName="y2" values="60;74;60" dur="1.4s" repeatCount="indefinite"/></line><line x1="66" y1="74" x2="88" y2="88"><animate attributeName="x2" values="88;72;88" dur="1.4s" repeatCount="indefinite"/><animate attributeName="y2" values="88;74;88" dur="1.4s" repeatCount="indefinite"/></line><line x1="40" y1="70" x2="58" y2="56"><animate attributeName="x2" values="58;70;58" dur="1.4s" repeatCount="indefinite"/><animate attributeName="y2" values="56;66;56" dur="1.4s" repeatCount="indefinite"/></line>`);
  if(type==="breathe") return baseSvg(`${ground}${head}<line x1="60" y1="29" x2="60" y2="64"/><line x1="60" y1="64" x2="48" y2="101"/><line x1="60" y1="64" x2="72" y2="101"/><circle cx="60" cy="47" r="12" opacity=".18"><animate attributeName="r" values="9;17;9" dur="4s" repeatCount="indefinite"/></circle>`);
  return baseSvg(`<circle cx="60" cy="60" r="26" opacity=".16"><animate attributeName="r" values="22;30;22" dur="${type==="rest"?"2":"3"}s" repeatCount="indefinite"/></circle><text x="60" y="65" text-anchor="middle" fill="currentColor" stroke="none" font-size="13">DESCANSO</text>`);
 }
@@ -820,6 +845,10 @@ document.getElementById("closeTrainer").onclick=closeTrainer;
 document.getElementById("finishSave").onclick=saveWorkout;
 document.getElementById("finishClose").onclick=closeTrainer;
 document.getElementById("rewardBtn").onclick=revealReward;
+
+const finToggle=document.getElementById("finToggle");
+finToggle.checked=getFinisher();
+finToggle.onchange=()=>{localStorage.setItem("duo20_finisher",finToggle.checked?"1":"0");vibrate(20);renderWorkoutCards()};
 
 /* ---------- PWA: icono PNG dinámico + manifest en runtime ---------- */
 (function pwa(){
