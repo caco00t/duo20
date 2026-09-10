@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover" />
+<title>GeoEnergía · Demo</title>
+<!--
+  GeoEnergía — Demo de activos energéticos sobre Google Maps Platform.
+  App de una sola página, sin servidor. Todo corre en el navegador.
+
+  APIs de Google Maps Platform utilizadas (todas cubiertas por la Maps Demo Key):
+    - Maps JavaScript API (mapa base + librería "maps", "marker", "places")
+    - Advanced Markers (AdvancedMarkerElement + PinElement)
+    - Places API (New) — PlaceAutocompleteElement para búsqueda de direcciones
+    - @googlemaps/markerclusterer (librería open source de clustering)
+
+  Se usan SOLO envoltorios del SDK (importLibrary), nunca fetch() REST directo,
+  para evitar el bloqueo CORS (CF1). Por eso funciona sin backend.
+
+  Los activos mostrados son DATOS SINTÉTICOS de demostración; no representan
+  infraestructura real y no provienen de ninguna API de Google.
+
+  La API key NO está incrustada en el código. Se toma de (en este orden):
+    1. parámetro de URL  ?key=TU_KEY
+    2. localStorage "gmaps-key"
+    3. el campo de entrada que aparece si no hay key
+-->
+<style>
+  :root {
+    --bg: #0e1420;
+    --panel: #161f2e;
+    --panel-2: #1e293b;
+    --line: #2a3646;
+    --text: #e6edf6;
+    --muted: #93a4b8;
+    --teal: #12a594;
+    --teal-2: #0d7d71;
+    --amber: #e8a317;
+    --red: #e05252;
+    --accent: #4cc3ff;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; }
+  body {
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    -webkit-text-size-adjust: 100%;
+  }
+  #app { display: flex; flex-direction: column; height: 100dvh; }
+
+  header {
+    padding: 10px 14px calc(10px + env(safe-area-inset-top)) 14px;
+    padding-top: calc(10px + env(safe-area-inset-top));
+    background: linear-gradient(180deg, #101a29, #0e1420);
+    border-bottom: 1px solid var(--line);
+    display: flex; align-items: center; gap: 10px;
+  }
+  header .logo {
+    width: 34px; height: 34px; border-radius: 9px; flex: 0 0 auto;
+    background: radial-gradient(circle at 30% 25%, var(--teal), var(--teal-2));
+    display: grid; place-items: center; font-weight: 800; color: #04211d;
+  }
+  header h1 { font-size: 16px; margin: 0; letter-spacing: .2px; }
+  header p { font-size: 11px; margin: 2px 0 0; color: var(--muted); }
+
+  .kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; padding: 10px 14px; }
+  .kpi { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 9px 10px; }
+  .kpi b { font-size: 19px; display: block; line-height: 1.05; }
+  .kpi span { font-size: 10.5px; color: var(--muted); }
+  .kpi.op b { color: var(--teal); }
+  .kpi.mant b { color: var(--amber); }
+  .kpi.alert b { color: var(--red); }
+
+  .controls { padding: 0 14px 10px; display: flex; flex-direction: column; gap: 8px; }
+  .search-wrap { position: relative; }
+  gmp-place-autocomplete, .gmp-slot {
+    width: 100%; display: block;
+    --gmp-mat-color-surface: var(--panel-2);
+  }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chip {
+    font-size: 12px; padding: 6px 10px; border-radius: 999px;
+    background: var(--panel); border: 1px solid var(--line); color: var(--text);
+    cursor: pointer; user-select: none; display: inline-flex; align-items: center; gap: 6px;
+  }
+  .chip .dot { width: 9px; height: 9px; border-radius: 50%; }
+  .chip.off { opacity: .38; }
+  .btn {
+    font-size: 12.5px; padding: 8px 12px; border-radius: 10px; cursor: pointer;
+    background: var(--teal); color: #04211d; border: none; font-weight: 700;
+  }
+  .btn.ghost { background: transparent; color: var(--text); border: 1px solid var(--line); }
+
+  #map { flex: 1 1 auto; width: 100%; min-height: 240px; background: #0b111b; }
+
+  .footer { padding: 8px 14px calc(10px + env(safe-area-inset-bottom)); font-size: 10.5px; color: var(--muted); border-top: 1px solid var(--line); background: var(--panel); }
+  .footer b { color: var(--text); }
+
+  /* Pantalla de captura de key */
+  .keygate {
+    position: fixed; inset: 0; z-index: 50; display: none;
+    place-items: center; padding: 22px; background: rgba(8,12,20,.92); backdrop-filter: blur(3px);
+  }
+  .keygate.show { display: grid; }
+  .keycard { max-width: 440px; width: 100%; background: var(--panel); border: 1px solid var(--line); border-radius: 16px; padding: 20px; }
+  .keycard h2 { margin: 0 0 6px; font-size: 17px; }
+  .keycard p { color: var(--muted); font-size: 13px; line-height: 1.5; }
+  .keycard ol { color: var(--muted); font-size: 12.5px; padding-left: 18px; line-height: 1.6; }
+  .keycard a { color: var(--accent); }
+  .keycard input {
+    width: 100%; margin: 10px 0; padding: 11px 12px; border-radius: 10px;
+    border: 1px solid var(--line); background: var(--bg); color: var(--text); font-size: 14px;
+  }
+  .keycard .row { display: flex; gap: 8px; align-items: center; }
+  .err { color: var(--red); font-size: 12px; min-height: 16px; }
+
+  /* InfoWindow */
+  .iw { font-family: inherit; color: #10233a; min-width: 190px; }
+  .iw h3 { margin: 0 0 4px; font-size: 14px; }
+  .iw .tag { display: inline-block; font-size: 10.5px; padding: 2px 8px; border-radius: 999px; color: #fff; margin-bottom: 6px; }
+  .iw dl { margin: 0; font-size: 12px; }
+  .iw dl div { display: flex; justify-content: space-between; gap: 12px; padding: 1px 0; }
+  .iw dt { color: #5a6b80; }
+
+  @media (min-width: 820px) {
+    #app { flex-direction: row; }
+    .side { width: 360px; flex: 0 0 360px; display: flex; flex-direction: column; border-right: 1px solid var(--line); height: 100dvh; overflow-y: auto; }
+    #map { height: 100dvh; }
+    .kpis { grid-template-columns: repeat(2, 1fr); }
+  }
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="side">
+    <header>
+      <div class="logo">G</div>
+      <div>
+        <h1>GeoEnergía · Demo</h1>
+        <p>Activos de red · Costa Caribe (datos sintéticos)</p>
+      </div>
+    </header>
+
+    <div class="kpis">
+      <div class="kpi"><b id="k-total">0</b><span>Activos</span></div>
+      <div class="kpi op"><b id="k-op">0</b><span>Operativos</span></div>
+      <div class="kpi mant"><b id="k-mant">0</b><span>Mantenimiento</span></div>
+      <div class="kpi alert"><b id="k-alert">0</b><span>Alerta</span></div>
+    </div>
+
+    <div class="controls">
+      <div class="search-wrap" id="search-slot">
+        <!-- PlaceAutocompleteElement se monta aquí -->
+      </div>
+      <div class="chips" id="type-chips"></div>
+      <div style="display:flex; gap:8px;">
+        <button class="btn" id="btn-loc">📍 Mi ubicación</button>
+        <button class="btn ghost" id="btn-reset">Restablecer vista</button>
+      </div>
+      <div id="nearest" style="font-size:12px; color:var(--muted); min-height:16px;"></div>
+    </div>
+
+    <div class="footer">
+      <b>Demo Key</b> · sin producción. Los activos son ficticios.
+      Búsqueda de direcciones vía Places API (New).
+    </div>
+  </div>
+
+  <div id="map"></div>
+</div>
+
+<!-- Captura de API key -->
+<div class="keygate" id="keygate">
+  <div class="keycard">
+    <h2>Pega tu Maps Demo Key</h2>
+    <p>Para prototipar sin facturación ni proyecto de Cloud:</p>
+    <ol>
+      <li>Abre <a href="https://mapsplatform.google.com/maps-demo-key?utm_campaign=gmp_git_agentskills_v1" target="_blank" rel="noopener">mapsplatform.google.com/maps-demo-key</a></li>
+      <li>Inicia sesión con una cuenta de Google (no pide tarjeta)</li>
+      <li>Acepta los Términos del Proyecto Demo</li>
+      <li>Genera / revela la clave y cópiala</li>
+    </ol>
+    <input id="key-input" type="text" placeholder="AIza..." autocomplete="off" spellcheck="false" />
+    <div class="err" id="key-err"></div>
+    <div class="row">
+      <button class="btn" id="key-save">Cargar mapa</button>
+      <label style="font-size:12px;color:var(--muted);"><input type="checkbox" id="key-remember" checked /> Recordar en este dispositivo</label>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+/* ------------------------------------------------------------------ *
+ * 1) Datos sintéticos de demostración (NO son activos reales ni       *
+ *    provienen de ninguna API de Google). Costa Caribe de Colombia.   *
+ * ------------------------------------------------------------------ */
+const TYPES = {
+  citygate:  { label: "City gate",              glyph: "C", color: "#4cc3ff" },
+  erp:       { label: "Estación regulación",    glyph: "R", color: "#12a594" },
+  valvula:   { label: "Válvula seccionamiento", glyph: "V", color: "#8b7bf0" },
+  telemetria:{ label: "Punto telemetría",       glyph: "T", color: "#3fbf8f" },
+  compresion:{ label: "Estación compresión",    glyph: "K", color: "#e8a317" },
+};
+const STATUS = {
+  Operativo:     "#12a594",
+  Mantenimiento: "#e8a317",
+  Alerta:        "#e05252",
+};
+
+// Semillas alrededor de Barranquilla, Cartagena y Santa Marta.
+const SEEDS = [
+  ["Barranquilla", 10.9685, -74.7813],
+  ["Cartagena",    10.3910, -75.4794],
+  ["Santa Marta",  11.2408, -74.1990],
+  ["Soledad",      10.9170, -74.7640],
+  ["Sabanalarga",  10.6300, -74.9200],
+];
+const TYPE_KEYS = Object.keys(TYPES);
+const STATUS_KEYS = Object.keys(STATUS);
+
+// PRNG determinista para que la demo sea reproducible.
+let _s = 20260910;
+function rnd() { _s = (_s * 1103515245 + 12345) & 0x7fffffff; return _s / 0x7fffffff; }
+
+const ASSETS = [];
+let idc = 1000;
+for (const [city, lat, lng] of SEEDS) {
+  const n = 6 + Math.floor(rnd() * 4);
+  for (let i = 0; i < n; i++) {
+    const t = TYPE_KEYS[Math.floor(rnd() * TYPE_KEYS.length)];
+    // 70% operativo, 20% mantenimiento, 10% alerta
+    const r = rnd();
+    const st = r < 0.7 ? "Operativo" : r < 0.9 ? "Mantenimiento" : "Alerta";
+    ASSETS.push({
+      id: "AC-" + (idc++),
+      name: `${TYPES[t].label} ${city} ${i + 1}`,
+      type: t, status: st, city,
+      lat: lat + (rnd() - 0.5) * 0.28,
+      lng: lng + (rnd() - 0.5) * 0.28,
+      presion: (18 + rnd() * 42).toFixed(1),   // bar (sintético)
+      flujo: (rnd() * 950).toFixed(0),          // km3/d (sintético)
+    });
+  }
+}
+
+/* ------------------------------------------------------------------ *
+ * 2) Resolución de la API key (URL > localStorage > input)            *
+ * ------------------------------------------------------------------ */
+function resolveKey() {
+  const u = new URLSearchParams(location.search).get("key");
+  if (u) return u.trim();
+  return (localStorage.getItem("gmaps-key") || "").trim();
+}
+const gate = document.getElementById("keygate");
+const keyInput = document.getElementById("key-input");
+const keyErr = document.getElementById("key-err");
+
+document.getElementById("key-save").addEventListener("click", () => {
+  const k = keyInput.value.trim();
+  if (!k.startsWith("AIza")) { keyErr.textContent = "La clave suele empezar por 'AIza…'. Revisa e intenta de nuevo."; return; }
+  if (document.getElementById("key-remember").checked) localStorage.setItem("gmaps-key", k);
+  gate.classList.remove("show");
+  boot(k);
+});
+
+/* ------------------------------------------------------------------ *
+ * 3) Bootstrap loader oficial de Maps JS (patrón vigente).            *
+ *    La key se inyecta por variable — nunca hardcodeada.              *
+ * ------------------------------------------------------------------ */
+function loadMapsSdk(key) {
+  ((g) => {
+    var h, a, k, p = "The Google Maps JavaScript API", c = "google", l = "importLibrary",
+        q = "__ib__", m = document, b = window;
+    b = b[c] || (b[c] = {});
+    var d = b.maps || (b.maps = {}), r = new Set(), e = new URLSearchParams(),
+        u = () => h || (h = new Promise(async (f, n) => {
+          await (a = m.createElement("script"));
+          e.set("libraries", [...r] + "");
+          for (k in g) e.set(k.replace(/[A-Z]/g, t => "_" + t[0].toLowerCase()), g[k]);
+          e.set("callback", c + ".maps." + q);
+          a.src = `https://maps.${c}apis.com/maps/api/js?` + e;
+          d[q] = f;
+          a.onerror = () => h = n(Error(p + " could not load."));
+          a.nonce = m.querySelector("script[nonce]")?.nonce || "";
+          m.head.append(a);
+        }));
+    d[l] ? console.warn(p + " only loads once. Ignoring:", g) : d[l] = (f, ...n) => r.add(f) && u().then(() => d[l](f, ...n));
+  })({
+    key,
+    v: "weekly",
+    language: "es",
+    region: "CO",
+    internalUsageAttributionIds: ["gmp_git_agentskills_v1"],
+  });
+}
+
+/* ------------------------------------------------------------------ *
+ * 4) Arranque de la app                                              *
+ * ------------------------------------------------------------------ */
+const CENTER = { lat: 10.75, lng: -74.75 };
+const active = new Set(TYPE_KEYS); // tipos visibles
+let map, infoWindow, clusterer, meMarker = null;
+const markers = new Map(); // id -> AdvancedMarkerElement
+
+function haversineKm(a, b) {
+  const R = 6371, dLat = (b.lat - a.lat) * Math.PI / 180, dLng = (b.lng - a.lng) * Math.PI / 180;
+  const s = Math.sin(dLat / 2) ** 2 + Math.cos(a.lat * Math.PI / 180) * Math.cos(b.lat * Math.PI / 180) * Math.sin(dLng / 2) ** 2;
+  return 2 * R * Math.asin(Math.sqrt(s));
+}
+
+async function boot(key) {
+  loadMapsSdk(key);
+  try {
+    const { Map, InfoWindow } = await google.maps.importLibrary("maps");
+    const { AdvancedMarkerElement, PinElement } = await google.maps.importLibrary("marker");
+    await google.maps.importLibrary("places");
+    const { MarkerClusterer } = await import("https://cdn.jsdelivr.net/npm/@googlemaps/markerclusterer@2/+esm");
+
+    map = new Map(document.getElementById("map"), {
+      center: CENTER, zoom: 8,
+      mapId: "DEMO_MAP_ID",           // requerido por AdvancedMarkerElement (CF9)
+      mapTypeControl: false, streetViewControl: false, fullscreenControl: false,
+    });
+    infoWindow = new InfoWindow();
+
+    // Marcadores de activos
+    const list = [];
+    for (const a of ASSETS) {
+      const pin = new PinElement({
+        background: STATUS[a.status],
+        borderColor: "#0b1a17",
+        glyph: TYPES[a.type].glyph,
+        glyphColor: "#04211d",
+      });
+      const mk = new AdvancedMarkerElement({ position: { lat: a.lat, lng: a.lng }, content: pin.element, title: a.name });
+      mk.addListener("click", () => openInfo(a, mk));
+      markers.set(a.id, { mk, asset: a });
+      list.push(mk);
+    }
+    clusterer = new MarkerClusterer({ map, markers: list });
+
+    buildChips();
+    buildAutocomplete();
+    renderKpis();
+
+    document.getElementById("btn-loc").addEventListener("click", locateMe);
+    document.getElementById("btn-reset").addEventListener("click", () => { map.setCenter(CENTER); map.setZoom(8); });
+  } catch (err) {
+    console.error(err);
+    gate.classList.add("show");
+    keyErr.textContent = "No se pudo cargar el mapa. Verifica que la clave sea válida y que 'Maps JavaScript API' y 'Places API (New)' estén disponibles.";
+  }
+}
+
+function openInfo(a, mk) {
+  const c = STATUS[a.status];
+  infoWindow.setContent(`
+    <div class="iw">
+      <h3>${a.name}</h3>
+      <span class="tag" style="background:${c}">${a.status}</span>
+      <dl>
+        <div><dt>ID</dt><dd>${a.id}</dd></div>
+        <div><dt>Tipo</dt><dd>${TYPES[a.type].label}</dd></div>
+        <div><dt>Presión</dt><dd>${a.presion} bar</dd></div>
+        <div><dt>Flujo</dt><dd>${a.flujo} km³/d</dd></div>
+        <div><dt>Municipio</dt><dd>${a.city}</dd></div>
+      </dl>
+    </div>`);
+  infoWindow.open(map, mk);
+}
+
+function renderKpis() {
+  const vis = ASSETS.filter(a => active.has(a.type));
+  document.getElementById("k-total").textContent = vis.length;
+  document.getElementById("k-op").textContent = vis.filter(a => a.status === "Operativo").length;
+  document.getElementById("k-mant").textContent = vis.filter(a => a.status === "Mantenimiento").length;
+  document.getElementById("k-alert").textContent = vis.filter(a => a.status === "Alerta").length;
+}
+
+function applyFilter() {
+  const shown = [];
+  for (const { mk, asset } of markers.values()) {
+    if (active.has(asset.type)) shown.push(mk);
+  }
+  clusterer.clearMarkers();
+  clusterer.addMarkers(shown);
+  renderKpis();
+}
+
+function buildChips() {
+  const wrap = document.getElementById("type-chips");
+  wrap.innerHTML = "";
+  for (const k of TYPE_KEYS) {
+    const c = document.createElement("div");
+    c.className = "chip";
+    c.innerHTML = `<span class="dot" style="background:${TYPES[k].color}"></span>${TYPES[k].label}`;
+    c.addEventListener("click", () => {
+      if (active.has(k)) { active.delete(k); c.classList.add("off"); }
+      else { active.add(k); c.classList.remove("off"); }
+      applyFilter();
+    });
+    wrap.appendChild(c);
+  }
+}
+
+function buildAutocomplete() {
+  const el = new google.maps.places.PlaceAutocompleteElement({});
+  el.className = "gmp-slot";
+  document.getElementById("search-slot").appendChild(el);
+  el.addEventListener("gmp-select", async ({ placePrediction }) => {
+    const place = placePrediction.toPlace();
+    await place.fetchFields({ fields: ["displayName", "formattedAddress", "location"] });
+    const loc = { lat: place.location.lat(), lng: place.location.lng() };
+    map.setCenter(loc); map.setZoom(13);
+    dropMe(loc, place.displayName || "Ubicación buscada");
+    showNearest(loc);
+  });
+}
+
+async function locateMe() {
+  if (!navigator.geolocation) { document.getElementById("nearest").textContent = "Geolocalización no disponible."; return; }
+  navigator.geolocation.getCurrentPosition(
+    (pos) => {
+      const loc = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+      map.setCenter(loc); map.setZoom(12);
+      dropMe(loc, "Mi ubicación");
+      showNearest(loc);
+    },
+    () => { document.getElementById("nearest").textContent = "No se pudo obtener la ubicación."; },
+    { enableHighAccuracy: true, timeout: 8000 }
+  );
+}
+
+async function dropMe(loc, title) {
+  const { AdvancedMarkerElement, PinElement } = await google.maps.importLibrary("marker");
+  if (meMarker) meMarker.map = null;
+  const pin = new PinElement({ background: "#4cc3ff", borderColor: "#0b2233", glyphColor: "#04211d" });
+  meMarker = new AdvancedMarkerElement({ map, position: loc, content: pin.element, title });
+}
+
+function showNearest(loc) {
+  const vis = ASSETS.filter(a => active.has(a.type));
+  if (!vis.length) { document.getElementById("nearest").textContent = "No hay activos visibles."; return; }
+  let best = null, bd = Infinity;
+  for (const a of vis) {
+    const d = haversineKm(loc, a);
+    if (d < bd) { bd = d; best = a; }
+  }
+  document.getElementById("nearest").innerHTML =
+    `Activo más cercano: <b style="color:var(--text)">${best.name}</b> · ${bd.toFixed(1)} km · ${best.status}`;
+}
+
+/* ------------------------------------------------------------------ *
+ * 5) Puerta de entrada                                               *
+ * ------------------------------------------------------------------ */
+const existing = resolveKey();
+if (existing) boot(existing);
+else gate.classList.add("show");
+</script>
+</body>
+</html>
